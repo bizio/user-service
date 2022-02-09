@@ -1,0 +1,71 @@
+steps:
+
+    # Test app
+    - id: "Test"
+      name: "gcr.io/cloud-builders/go"
+      args: 
+          - "test"
+          - "./test/user-service_test.go"
+      env: 
+          - "PROJECT_ROOT=github.com/bizio/user-service"
+          - "GO111MODULE=on"
+          - "GCLOUD_DATASET_ID=$PROJECT_ID"
+
+    # Build app
+    - id: "Binary build"
+      name: "gcr.io/cloud-builders/go"
+      env: 
+          - "PROJECT_ROOT=github.com/bizio/user-service"
+          - "GO111MODULE=on"
+          - "CGO_ENABLED=0"
+      args: 
+          - "build"
+          - "-o"
+          - "cmd/server/server"
+          - "cmd/server/main.go"
+
+    # Build docker image
+    - id: "Docker build"
+      name: "gcr.io/cloud-builders/docker"
+      args:
+          - "build"
+          - "-f"
+          - "cmd/server/Staging.Dockerfile"
+          - "-t"
+          - "eu.gcr.io/$PROJECT_ID/user-service.v1:$SHORT_SHA"
+          - "cmd/server"
+
+    # Push docker image to registry
+    - id: "Docker push"
+      name: "gcr.io/cloud-builders/docker"
+      args:
+          - "push"
+          - "eu.gcr.io/$PROJECT_ID/user-service.v1:$SHORT_SHA"
+
+    # Deploy app to kubernetes
+    - id: "Deploy app"
+      name: "gcr.io/cloud-builders/kubectl"
+      entrypoint: "bash"
+      args:
+          - "-c"
+          - |
+              gcloud container clusters get-credentials $_CLUSTER --zone $_ZONE --project $PROJECT_ID
+              sed -e "s/SHORT_SHA/$SHORT_SHA/g" deployments/kubernetes/staging/deployments/user-service.yaml | kubectl apply -f -
+      env:
+          - "CLOUDSDK_COMPUTE_ZONE=$_ZONE"
+          - "CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER"
+
+    # Deploy services to kubernetes
+    - id: "Deploy services"
+      name: "gcr.io/cloud-builders/kubectl"
+      args: 
+          - "apply"
+          - "-R"
+          - "-f"
+          - "deployments/kubernetes/staging/services"
+      env:
+          - "CLOUDSDK_COMPUTE_ZONE=$_ZONE"
+          - "CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER"
+substitutions:
+  _ZONE: "europe-west2-a"
+  _CLUSTER: "wa-staging-gke-cluster-1"

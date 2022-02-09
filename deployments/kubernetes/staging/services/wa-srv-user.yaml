@@ -1,0 +1,20 @@
+kind: Service
+apiVersion: v1
+metadata:
+    name: user-service-service 
+    namespace: default
+    annotations: 
+      cloud.google.com/load-balancer-type: "Internal"
+spec:
+    type: LoadBalancer
+    selector:
+        app: user-service
+    ports:
+        - name: http 
+          protocol: TCP
+          port: 8082
+          targetPort: 8082
+        - name: grpc 
+          protocol: TCP
+          port: 22002
+          targetPort: 22002

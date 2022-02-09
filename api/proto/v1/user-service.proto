@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "user.proto";
+
+service UserService {
+
+    rpc Create(v1.CreateUserRequest) returns (v1.CreateUserResponse) {
+        option (google.api.http) = {
+            post: "/v1/users"
+            body: "*"
+        };
+    }
+
+    rpc Update(v1.UpdateUserRequest) returns (v1.GetUserResponse) {
+        option (google.api.http) = {
+            patch: "/v1/users/{user.id}"
+            body: "user"
+        };
+    }
+
+    rpc Get(v1.GetUserRequest) returns (v1.GetUserResponse) {
+        option (google.api.http) = {
+            get: "/v1/users/{id}"
+        };
+    }
+
+    rpc UpdateUserNotification(v1.UserNotificationUpdateRequest) returns (v1.UserNotification) {
+        option (google.api.http) = {
+            post: "/v1/notifications"
+            body: "*"
+        };
+    }
+
+    rpc ListUserNotifications(v1.ListUserNotificationsRequest) returns (v1.ListUserNotificationsResponse) {
+        option (google.api.http) = {
+            get: "/v1/notifications"
+        };
+    }
+
+    rpc QueueUserNotifications(google.protobuf.Empty) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/v1/notifications/queue"
+            body: "*"
+        };
+    }
+    
+    rpc GetReport(v1.GetReportRequest) returns (v1.Report) {
+        option (google.api.http) = {
+            get: "/v1/users/notifications/report"
+        };
+    }
+
+    rpc ListUsers(v1.ListUsersRequest) returns (v1.ListUsersResponse) {
+        option (google.api.http) = {
+            get: "/v1/users"
+        };
+    }
+
+    rpc ResetPassword(v1.ResetPasswordRequest) returns (v1.ResetPasswordResponse) {
+        option (google.api.http) = {
+            get: "/v1/users/password/reset"
+        };
+    }
+
+    rpc UpdatePassword(v1.UpdatePasswordRequest) returns (v1.UpdatePasswordResponse) {
+        option (google.api.http) = {
+            post: "/v1/users/password/update"
+            body: "*"
+        };
+    }
+
+}
+
+

@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "user.proto";
+
+message Tenant {
+    int64 id = 1;
+    string name = 2;
+    string code = 3;
+    string email = 4;
+    float credit = 5;
+    string logo_url = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
+}
+
+message CreateTenantRequest {
+    string name = 1;
+    string code = 2;
+    string email = 3;
+    string logo_url = 6;
+}
+
+message GetTenantRequest {
+    int64 id = 1;
+}
+
+message ListTenantsRequest {
+    string code = 1;
+    v1.Role role = 2;
+    int64 id = 3;
+}
+
+message ListTenantsResponse {
+    repeated v1.Tenant tenants = 1;
+}
+
+message Payment {
+    int64 id = 1;
+    int64 tenant_id = 2;
+    string ref = 3; // reference code or number provided by payment provider or bank
+    float amount = 4;
+    google.protobuf.Timestamp payment_date = 5;
+    int64 paid_by = 6; // user id of the payer
+    google.protobuf.Timestamp created_at = 7;
+    int64 created_by = 8; // user id  
+}
+
+message GetPaymentRequest {
+    int64 tenant_id = 1;
+    int64 payment_id = 2;
+}
+
+message CreatePaymentRequest {
+    int64 tenantId = 1;
+    string ref = 2; // reference code or number provided by payment provider or bank
+    float amount = 3;
+    google.protobuf.Timestamp payment_date = 4;
+    int64 paid_by = 5; // user id of the payer
+}
+
+message ListPaymentsRequest {
+    int64 tenantId = 1;
+}
+
+message ListPaymentsResponse {
+    repeated Payment payments = 1;
+}
+

@@ -1,0 +1,262 @@
+syntax = "proto3";
+
+//option go_package = "github.com/bizio/user-service/pkg/api/v1";
+
+package v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
+
+enum Role {
+    USER = 0; // usually a citizen that subscribe to local alerts
+    TENANT_ADMIN = 1; // town mayor (for small towns) or person in charge of weather alerts
+    ADMIN = 2; // super admin
+}
+
+enum NotificationType {
+    NONE = 0;
+    SMS = 1;
+    CALL = 2;
+    EMAIL = 3;
+}
+
+enum UserNotificationStatus {
+    PENDING = 0;
+    SENT = 1 ;
+    FAILED = 2;
+}
+
+message NotificationSettings {
+    NotificationType type = 1;
+    int32 priority = 2;
+}
+message UserNotification {
+    int64 id = 1;
+    int64 user_id = 2;
+    string email = 3;
+    string mobile = 4;
+    int64 alert_id = 5;
+    string short_message = 6;
+    string long_message = 7;
+    NotificationType type = 8; 
+    google.protobuf.Timestamp created_at = 9;
+    google.protobuf.Timestamp sent_at = 10;
+    string tenantName = 11;
+    string tenantCode = 12;
+    string refId = 13; // external provider id, for example message ID for mailgun email
+    UserNotificationStatus status = 14;
+    string reason = 16; // failure reason
+    float price = 17;
+}
+
+message UserNotificationUpdateRequest {
+    string refId = 1;
+    UserNotificationStatus status = 2;
+    string reason = 3; // failure reason
+    int64 id = 4;
+    google.protobuf.Timestamp sent_at = 5;
+    float price = 6;
+}
+
+message User {
+    int64 id = 1;
+    string firstName = 2;
+    string lastName = 3;
+    string email = 4; 
+    string password = 5;
+    int64 tenantId = 6;
+    Role role = 7;
+    string mobile = 8;
+    repeated NotificationSettings notifications = 9;
+    google.protobuf.Timestamp createdAt = 10;
+    google.protobuf.Timestamp updatedAt = 11;
+    string passwordResetToken = 12;
+}
+
+message CreateUserRequest {
+    string firstName = 1;
+    string lastName = 2;
+    string email = 3; 
+    string password = 4;
+    string telephone = 5;
+    string mobile = 6;
+    int64 tenantId = 7; // can only be set by ADMIN, TENANT_ADMIN with have is set it by default to the same value of current user, for USER will be ignored
+    Role role = 8; // only ADMIN can set it
+    repeated NotificationSettings notifications = 9;;
+}
+
+message CreateUserResponse {
+    int64 id = 1;
+}
+
+message UpdateUserRequest {
+    v1.User user = 1;
+    google.protobuf.FieldMask fields = 2;
+}
+
+message GetUserRequest {
+    int64 id = 1;
+    int64 tenant_id = 2;
+    Role role = 3;
+}
+
+message GetUserResponse {
+    int64 id = 1;
+    string firstName = 2;
+    string lastName = 3;
+    string email = 4; 
+    int64 tenant_id = 5;
+    Tenant tenant = 6;
+    Role role = 7;
+    string mobile = 8;
+    repeated NotificationSettings notifications = 9;
+    google.protobuf.Timestamp createdAt = 10;
+    google.protobuf.Timestamp updatedAt = 11;
+    string passwordResetToken = 12;
+}
+
+message ListUsersRequest {
+    string first_name = 1;
+    string last_name = 2;
+    string email = 3; 
+    int64 tenant_id = 4; 
+    Role role = 5; 
+    int32 limit = 6;
+    int32 offset = 7;
+}
+
+message ListUsersResponse {
+    repeated v1.User users = 1;
+    int32 total = 2;
+}
+
+message ListUserNotificationsRequest {
+    int64 userId = 1;
+    string email = 2;
+    string mobile = 3; 
+    int64 alertId = 4;
+    google.protobuf.Timestamp createdAtStart = 5;
+    google.protobuf.Timestamp createdAtEnd = 6; 
+    google.protobuf.Timestamp sentAtStart = 7;
+    google.protobuf.Timestamp sentAtEnd = 8; 
+    v1.UserNotificationStatus status = 9;
+    v1.NotificationType type = 10; 
+    int32 limit = 11; 
+    int32 offset = 12;   
+}
+
+message ListUserNotificationsResponse {
+    repeated v1.UserNotification notifications = 1;
+    int32 total = 2;
+}
+
+message GetUserByEmailAndPasswordRequest {
+    string email = 1;
+    string password = 2;
+    int64 tenant_id = 3;
+}
+
+message ResetPasswordRequest {
+    string email = 1;
+}
+
+message ResetPasswordResponse {
+    string token = 1;
+}
+
+message UpdatePasswordRequest {
+    string token = 1;
+    string password = 2;
+}
+
+message UpdatePasswordResponse {
+}
+
+message NotificationsReport {
+    int32 sent  = 1;
+    int32  failed = 2;
+    int32 pending = 3;
+    float cost = 4; 
+}
+
+message Report {
+    int32 total = 1;
+    float cost = 2;
+    map<string, NotificationsReport> data = 3;
+}
+
+message GetReportRequest {
+    int64 tenantId = 1;
+}
+
+
+message Tenant {
+    int64 id = 1;
+    string name = 2;
+    string code = 3;
+    string email = 4;
+    float credit = 5;
+    string logo_url = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
+}
+
+message CreateTenantRequest {
+    string name = 1;
+    string code = 2;
+    string email = 3;
+    string logo_url = 6;
+}
+
+message UpdateTenantRequest {
+    v1.Tenant tenant = 1;
+    google.protobuf.FieldMask fields = 2;
+}
+
+message GetTenantRequest {
+    int64 id = 1;
+}
+
+message ListTenantsRequest {
+    string code = 1;
+    v1.Role role = 2;
+    int64 id = 3;
+}
+
+message ListTenantsResponse {
+    repeated v1.Tenant tenants = 1;
+}
+
+message Payment {
+    int64 id = 1;
+    int64 tenant_id = 2;
+    string ref = 3; // reference code or number provided by payment provider or bank
+    float amount = 4;
+    google.protobuf.Timestamp payment_date = 5;
+    int64 paid_by = 6; // user id of the payer
+    google.protobuf.Timestamp created_at = 7;
+    int64 created_by = 8; // user id  
+}
+
+message GetPaymentRequest {
+    int64 tenant_id = 1;
+    int64 payment_id = 2;
+}
+
+message CreatePaymentRequest {
+    int64 tenantId = 1;
+    string ref = 2; // reference code or number provided by payment provider or bank
+    float amount = 3;
+    google.protobuf.Timestamp payment_date = 4;
+    int64 paid_by = 5; // user id of the payer
+}
+
+message ListPaymentsRequest {
+    int64 tenantId = 1;
+}
+
+message ListPaymentsResponse {
+    repeated Payment payments = 1;
+}
+
